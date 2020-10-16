@@ -1,8 +1,9 @@
 const supertest = require('supertest');
 
 const server = require('./server.js');
-const { intersect } = require('../database/dbConfig.js/');
-const { expect } = require('helmet');
+const db = require('../database/dbConfig.js/');
+
+const testUser = { username: 'test', password: 'test' };
 
 describe('server.js', () => {
   describe('get request for jokes', () => {
@@ -22,8 +23,40 @@ describe('server.js', () => {
   });
 
   describe('registering a new user', () => {
-    it('should return status code 201 when adding a new user', () => {
+    it('should return status code 201 when adding a new user', async () => {
+      await db('users').truncate();
 
+      return supertest(server).post('/api/auth/register')
+        .send(testUser)
+        .then(res => {
+          expect(res.status).toBe(201);
+        })
+    });
+
+    it('should return status code 500 when adding invalid user', async () => {
+      return supertest(server).post('/api/auth/register')
+        .send({user: 'bob', pass: 'joe'})
+        .then(res => {
+          expect(res.status).toBe(500);
+        })
+    });
+  });
+
+  describe('login with user', () => {
+    it('should return 200 with test user', () => {
+      return supertest(server).post('/api/auth/login')
+        .send(testUser)
+        .then(res => {
+          expect(res.status).toBe(200);
+        })
+    })
+
+    it('should return 401 with invalid user', () => {
+      return supertest(server).post('/api/auth/login')
+        .send({ username: 'not', password: 'working' })
+        .then(res => {
+          expect(res.status).toBe(401);
+        })
     })
   })
 })
