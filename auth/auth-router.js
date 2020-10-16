@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const router = require('express').Router();
 
 const Users = require('../users/user-model.js');
+const { jwtSecret } = require('../config/secret.js');
 
 router.post('/register', (req, res) => {
   // implement registration
@@ -39,12 +40,18 @@ router.post('/login', (req, res) => {
     })
 });
 
-function generateTOken(user) {
+function generateToken(user) {
   const payload = {
     subject: user.id, 
     username: user.username,
-    
+    lat: Date.now()
   }
+
+  const options = {
+    expiresIn: '1h'
+  }
+
+  return jwt.sign(payload, jwtSecret, options);
 }
 
 module.exports = router;
